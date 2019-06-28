@@ -4,8 +4,11 @@ echo -e "Please enter the domain that is pointing to this Server.\nFor example, 
 read -p "Domain: " domain
 echo "Please enter the UDP Port you have forwarded for Wireguard (e.g. 1635)"
 read -p "Port: " port
-echo "Will be using: $domain:$port for this instance"
-echo "Script starting in:\n\n"
+echo -e "Enter Network Adapter name: "
+# ip route get 8.8.8.8 | awk -- '{print $5}'
+read -p "Network Adapter Name: " networkAdapter
+echo "Will be using: $domain:$port for this instance. Connections will go through $networkAdapter Network Adapter."
+echo -e "Script starting in:\n"
 for i in {5..0}; do echo -n $i... && sleep 1; done
 add-apt-repository ppa:wireguard/wireguard -y
 apt update && DEBIAN_FRONTEND=noninteractive apt upgrade -y && apt autoremove -y && apt autoclean -y
@@ -30,10 +33,8 @@ Address = 10.9.0.1/24
 ListenPort = $port
 PrivateKey = ${serverPrivateKey}
 SaveConfig = true
-
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o ens3 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o ens3 -j MASQUERADE
-
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o $networkAdapter -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o $networkAdapter -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o $networkAdapter -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o $networkAdapter -j MASQUERADE
 [Peer]
 #Client1
 PublicKey = ${client1PublicKey}
@@ -46,7 +47,6 @@ cat > /etc/wireguard/client1.conf << ENDOFFILE
 Address = 10.9.0.2/32
 PrivateKey = ${client1PrivateKay}
 DNS = 1.1.1.1
-
 [Peer]
 PublicKey = ${serverPublicKey} 
 Endpoint = $domain:$port
@@ -64,4 +64,4 @@ chown -R root:root /etc/wireguard/
 chmod -R og-rwx /etc/wireguard/*
 wg-quick up wg0
 qrencode -t ansiutf8 < /etc/wireguard/client1.conf
-echo -e "++++++++++++++++++++++++++\nCompleted Setup\n++++++++++++++++++++++++++\nPlease ensure you reboot after scanning the QR Code! Once Server has rebooted you will be able to connect."
+echo -e "++++++++++++++++++++++++++\nCompleted Setup\n++++++++++++++++++++++++++\nPlease ensure you reboot after scanning the QR Code!\nOnce Server has rebooted you will be able to connect."
