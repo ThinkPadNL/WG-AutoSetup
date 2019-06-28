@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "Please enter the domain that is pointing to this Server.\nFor example, if the domain is https://www.wireguard.server.com \nSimple enter: wireguard.server.com"
+echo -e "Please enter the domain that is pointing to this Server.\nFor example, if the domain is https://www.wireguard.server.com \nSimply enter: wireguard.server.com"
 read -p "Domain: " domain
 echo "Please enter the UDP Port you have forwarded for Wireguard (e.g. 1635)"
 read -p "Port: " port
